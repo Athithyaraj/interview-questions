@@ -971,3 +971,1202 @@ public static T Retry<T>(Func<T> operation, int maxRetries = 3, TimeSpan? initia
     }
 }
 This Retry method takes a function (Func<T> operation) representing the code to be retried, a maximum number of retries, an optional initial delay, and a list of exception types to handle. The while loop executes the operation, catching exceptions that match the provided types. Exponential backoff is achieved by doubling the delay after each retry. If the maximum number of retries is reached, the exception is re-thrown. If the operation is successful, the result is returned.
+
+
+
+
+
+
+Absolutely. Let’s go **topic by topic**, but in a way you can actually explain in a **5-year C#/.NET interview**.
+
+---
+
+# 1. Task
+
+### Definition
+
+A **Task** represents an asynchronous or concurrent operation that may complete in the future.
+
+In simple words:
+
+> A Task represents **work that is being done or will be completed later**.
+
+Example:
+
+```csharp
+public async Task<string> GetDataAsync()
+{
+    return await httpClient.GetStringAsync(url);
+}
+```
+
+Here:
+
+```csharp
+Task<string>
+```
+
+means the method will eventually produce a `string`.
+
+### Important point
+
+A `Task` **does not necessarily create a new thread**.
+
+For example:
+
+```csharp
+await httpClient.GetAsync(url);
+```
+
+The HTTP request is I/O-bound. While waiting for the server, a ThreadPool thread doesn't need to remain blocked.
+
+### Task with result
+
+```csharp
+Task<int> task = CalculateAsync();
+
+int result = await task;
+```
+
+`Task<int>` means:
+
+> "This operation will eventually give me an integer."
+
+### Task without result
+
+```csharp
+Task task = SaveDataAsync();
+
+await task;
+```
+
+This means:
+
+> "This operation will eventually complete, but it doesn't return a value."
+
+---
+
+# 2. Thread
+
+### Definition
+
+A **Thread** is an independent path of execution within a process.
+
+Think about a program:
+
+```text
+Application / Process
+        |
+   ----------------
+   |      |       |
+Thread  Thread  Thread
+  1       2       3
+```
+
+Each thread can execute code independently.
+
+Example:
+
+```csharp
+Thread thread = new Thread(() =>
+{
+    Console.WriteLine("Hello");
+});
+
+thread.Start();
+```
+
+A new thread is created and starts executing the specified code.
+
+### Thread characteristics
+
+A thread:
+
+* Has its own execution path
+* Uses memory/resources
+* Is scheduled by the operating system
+* Can execute code concurrently with other threads
+
+### Why not create threads everywhere?
+
+Creating and destroying threads has overhead.
+
+That's why .NET provides the **ThreadPool** and higher-level abstractions such as `Task`.
+
+---
+
+# 3. ThreadPool
+
+### Definition
+
+The **ThreadPool** is a collection of reusable threads managed by .NET.
+
+Instead of:
+
+```text
+Create Thread
+     ↓
+Do work
+     ↓
+Destroy Thread
+```
+
+ThreadPool does:
+
+```text
+Get existing thread
+     ↓
+Do work
+     ↓
+Return thread to pool
+     ↓
+Reuse later
+```
+
+### Example
+
+```csharp
+Task.Run(() =>
+{
+    ProcessData();
+});
+```
+
+The work can be scheduled on a ThreadPool thread.
+
+### Why ThreadPool?
+
+Creating threads repeatedly is expensive.
+
+ThreadPool provides:
+
+* Thread reuse
+* Better performance
+* Reduced thread creation overhead
+* Better resource management
+
+### Important distinction
+
+Don't say:
+
+> Every Task uses a ThreadPool thread.
+
+That's incorrect.
+
+For example:
+
+```csharp
+await httpClient.GetAsync(url);
+```
+
+doesn't need a ThreadPool thread sitting there waiting for the network response.
+
+---
+
+# 4. Parallel Programming
+
+### Definition
+
+**Parallel programming** means executing multiple operations concurrently, usually by utilizing multiple CPU cores.
+
+Suppose you have:
+
+```text
+Task 1
+Task 2
+Task 3
+Task 4
+```
+
+Sequential:
+
+```text
+Task 1 → Task 2 → Task 3 → Task 4
+```
+
+Parallel:
+
+```text
+Task 1 ──→ CPU Core 1
+Task 2 ──→ CPU Core 2
+Task 3 ──→ CPU Core 3
+Task 4 ──→ CPU Core 4
+```
+
+Example:
+
+```csharp
+Parallel.For(0, 100, i =>
+{
+    ProcessItem(i);
+});
+```
+
+### When should we use parallel programming?
+
+Mostly for **CPU-bound operations**.
+
+Examples:
+
+* Complex calculations
+* Image processing
+* Data processing
+* Encryption
+* Compression
+
+### Important
+
+Parallel programming is not the same as asynchronous programming.
+
+---
+
+# 5. Async vs Parallel
+
+This is a **very important interview question**.
+
+### Async
+
+Async is primarily useful for **I/O-bound operations**.
+
+Examples:
+
+```text
+Database
+HTTP API
+File
+Network
+AWS service
+```
+
+The application spends time **waiting**.
+
+### Parallel
+
+Parallelism is primarily useful for **CPU-bound operations**.
+
+Examples:
+
+```text
+Calculations
+Image processing
+Large data transformations
+```
+
+The CPU needs to **do more work**.
+
+### Easy way to remember
+
+> **Async = don't block while waiting.**
+
+> **Parallel = do multiple pieces of work at the same time.**
+
+---
+
+# 6. Synchronization
+
+### Definition
+
+**Synchronization** is the process of controlling access to shared resources when multiple threads are executing concurrently.
+
+Consider:
+
+```csharp
+int counter = 0;
+```
+
+Two threads execute:
+
+```csharp
+counter++;
+```
+
+It looks like one operation, but internally it involves:
+
+```text
+Read value
+    ↓
+Add 1
+    ↓
+Write value
+```
+
+Suppose counter = 10.
+
+```text
+Thread 1 → reads 10
+Thread 2 → reads 10
+
+Thread 1 → writes 11
+Thread 2 → writes 11
+```
+
+Expected:
+
+```text
+12
+```
+
+Actual:
+
+```text
+11
+```
+
+This is a problem caused by concurrent access.
+
+Synchronization mechanisms help prevent this.
+
+Examples:
+
+```text
+lock
+Monitor
+Mutex
+Semaphore
+Interlocked
+```
+
+---
+
+# 7. Lock
+
+### Definition
+
+`lock` is used to ensure that **only one thread at a time** can execute a particular section of code.
+
+Example:
+
+```csharp
+private readonly object _lock = new();
+
+public void Increment()
+{
+    lock (_lock)
+    {
+        counter++;
+    }
+}
+```
+
+When Thread 1 gets the lock:
+
+```text
+Thread 1 → 🔒 → executes
+
+Thread 2 → waits
+Thread 3 → waits
+```
+
+After Thread 1 exits:
+
+```text
+Thread 1 → releases lock
+
+Thread 2 → 🔒 → executes
+```
+
+### Why use lock?
+
+To protect shared mutable state.
+
+For example:
+
+```csharp
+lock (_lock)
+{
+    _balance -= amount;
+}
+```
+
+This prevents multiple threads from modifying the balance simultaneously.
+
+### Important
+
+Keep the locked section small.
+
+Bad:
+
+```csharp
+lock (_lock)
+{
+    CallExternalApi();
+    QueryDatabase();
+    DoLongCalculation();
+}
+```
+
+You're holding the lock for too long.
+
+Better:
+
+```csharp
+var result = Calculate();
+
+lock (_lock)
+{
+    UpdateSharedData(result);
+}
+```
+
+---
+
+# 8. Monitor
+
+### Definition
+
+`Monitor` is a .NET synchronization mechanism that provides **mutual exclusion and thread coordination**.
+
+A `lock` is essentially a simpler syntax around monitor-based locking.
+
+This:
+
+```csharp
+lock (_lock)
+{
+    DoSomething();
+}
+```
+
+is conceptually similar to:
+
+```csharp
+Monitor.Enter(_lock);
+
+try
+{
+    DoSomething();
+}
+finally
+{
+    Monitor.Exit(_lock);
+}
+```
+
+### Why Monitor?
+
+Monitor provides more control than `lock`.
+
+For example:
+
+```csharp
+if (Monitor.TryEnter(_lock, TimeSpan.FromSeconds(5)))
+{
+    try
+    {
+        DoSomething();
+    }
+    finally
+    {
+        Monitor.Exit(_lock);
+    }
+}
+```
+
+Here, the thread attempts to acquire the lock and can stop waiting after a timeout.
+
+### Interview answer
+
+> `lock` is the simpler syntax for mutual exclusion, while `Monitor` provides additional functionality such as `TryEnter` and thread signaling.
+
+---
+
+# 9. Mutex
+
+### Definition
+
+A **Mutex** is a synchronization mechanism that allows only one thread to access a resource at a time and can also be used for synchronization **between processes**.
+
+This is the important distinction.
+
+### Lock
+
+Usually:
+
+```text
+Process
+ ├── Thread 1
+ ├── Thread 2
+ └── Thread 3
+```
+
+`lock` is generally used within that process.
+
+### Mutex
+
+Can coordinate:
+
+```text
+Process A
+     ↓
+   Mutex
+     ↑
+Process B
+```
+
+### Example use case
+
+You want only one instance of an application to run:
+
+```text
+Application Instance 1
+       ↓
+    Gets Mutex
+
+Application Instance 2
+       ↓
+    Cannot get Mutex
+```
+
+### Interview answer
+
+> Mutex is useful when synchronization is required across processes, whereas `lock` is normally used for synchronization within a process.
+
+---
+
+# 10. Semaphore
+
+### Definition
+
+A **Semaphore** controls the number of threads that can access a resource simultaneously.
+
+Suppose:
+
+```csharp
+SemaphoreSlim semaphore = new SemaphoreSlim(3);
+```
+
+It allows up to **3 operations at the same time**.
+
+```text
+Thread 1 ──┐
+Thread 2 ──┤
+Thread 3 ──┤ → Resource
+Thread 4 ──┘   Waiting
+Thread 5       Waiting
+```
+
+When Thread 1 finishes:
+
+```text
+Thread 1 → leaves
+
+Thread 4 → enters
+```
+
+### Real-world example
+
+Imagine you have an external API that allows only 5 concurrent requests.
+
+You can use:
+
+```csharp
+SemaphoreSlim semaphore = new SemaphoreSlim(5);
+```
+
+Then only 5 operations are allowed concurrently.
+
+### Lock vs Semaphore
+
+```text
+lock       → 1 thread
+semaphore  → N threads
+```
+
+---
+
+# 11. Race Condition
+
+### Definition
+
+A **race condition** occurs when multiple threads access shared data concurrently and the final result depends on the timing/order of execution.
+
+Example:
+
+```csharp
+private int _counter = 0;
+
+public void Increment()
+{
+    _counter++;
+}
+```
+
+Suppose two threads call it simultaneously.
+
+```text
+Thread 1 → Read 0
+Thread 2 → Read 0
+
+Thread 1 → Write 1
+Thread 2 → Write 1
+```
+
+Expected:
+
+```text
+2
+```
+
+Actual:
+
+```text
+1
+```
+
+That's a race condition.
+
+### How to solve it?
+
+Use:
+
+```csharp
+lock
+```
+
+or:
+
+```csharp
+Interlocked.Increment(ref _counter);
+```
+
+or appropriate thread-safe collections.
+
+---
+
+# 12. Deadlock
+
+### Definition
+
+A **deadlock** occurs when two or more threads are waiting indefinitely for resources held by each other.
+
+Classic example:
+
+```text
+Thread 1
+   ↓
+Gets Lock A
+   ↓
+Waiting for Lock B
+
+Thread 2
+   ↓
+Gets Lock B
+   ↓
+Waiting for Lock A
+```
+
+Now:
+
+```text
+Thread 1 → waiting for Thread 2
+Thread 2 → waiting for Thread 1
+```
+
+Nobody can continue.
+
+---
+
+## How to prevent deadlocks?
+
+### 1. Acquire locks in consistent order
+
+Bad:
+
+```text
+Thread 1: Lock A → Lock B
+Thread 2: Lock B → Lock A
+```
+
+Good:
+
+```text
+Thread 1: Lock A → Lock B
+Thread 2: Lock A → Lock B
+```
+
+### 2. Keep lock duration short
+
+### 3. Avoid unnecessary nested locks
+
+### 4. Be careful with synchronous blocking
+
+Avoid:
+
+```csharp
+var result = GetDataAsync().Result;
+```
+
+or:
+
+```csharp
+GetDataAsync().Wait();
+```
+
+Prefer:
+
+```csharp
+var result = await GetDataAsync();
+```
+
+---
+
+# 13. CancellationToken
+
+### Definition
+
+`CancellationToken` provides a mechanism for **requesting cooperative cancellation** of an asynchronous or long-running operation.
+
+Example:
+
+```csharp
+CancellationTokenSource cts = new();
+
+await DoWorkAsync(cts.Token);
+```
+
+At some point:
+
+```csharp
+cts.Cancel();
+```
+
+requests cancellation.
+
+The operation can observe the token:
+
+```csharp
+public async Task DoWorkAsync(CancellationToken token)
+{
+    for (int i = 0; i < 100; i++)
+    {
+        token.ThrowIfCancellationRequested();
+
+        await Task.Delay(100, token);
+    }
+}
+```
+
+### Important interview point
+
+CancellationToken **doesn't forcibly terminate a thread**.
+
+It is cooperative.
+
+The code being executed must respond to the cancellation request.
+CancellationToken does not forcibly stop execution. It requests cancellation. The operation must cooperate by checking the token or passing it to an API that supports cancellation. If cancellation is observed, the operation can stop, commonly by throwing OperationCanceledException.
+---
+
+# 14. async
+
+### Definition
+
+`async` is a C# keyword used to declare a method that can perform asynchronous operations and use the `await` keyword.
+
+Example:
+
+```csharp
+public async Task<string> GetDataAsync()
+{
+    return await GetDataFromApiAsync();
+}
+```
+
+The method returns a `Task` or `Task<T>`.
+
+---
+
+# 15. await
+
+### Definition
+
+`await` asynchronously waits for a Task to complete **without blocking the current thread**.
+
+Example:
+
+```csharp
+var customer = await GetCustomerAsync();
+```
+
+Conceptually:
+
+```text
+Start operation
+      ↓
+Operation not complete
+      ↓
+Method yields
+      ↓
+Thread can do other work
+      ↓
+Operation completes
+      ↓
+Method continues
+```
+
+---
+
+# 16. Why async/await for API calls?
+
+This is one of the **most important questions for your interview**.
+
+Suppose your API calls another service:
+
+```csharp
+var response = await httpClient.GetAsync(url);
+```
+
+HTTP is an I/O operation.
+
+The application sends the request:
+
+```text
+.NET Application
+      ↓
+HTTP Request
+      ↓
+External Server
+      ↓
+Waiting for response
+```
+
+The response might take:
+
+```text
+100 ms
+500 ms
+2 seconds
+```
+
+During that waiting period, your application doesn't need a ThreadPool thread to sit there doing nothing.
+
+With async:
+
+```text
+Request
+   ↓
+Start HTTP operation
+   ↓
+Thread is not blocked waiting
+   ↓
+Thread can serve other work
+   ↓
+HTTP response arrives
+   ↓
+Continue method
+   ↓
+Return response
+```
+
+### Why is this important?
+
+Because a web server may receive thousands of requests.
+
+If every request blocks a ThreadPool thread while waiting for I/O:
+
+```text
+Request 1 → Thread blocked
+Request 2 → Thread blocked
+Request 3 → Thread blocked
+Request 4 → Thread blocked
+...
+```
+
+Eventually the application can experience **ThreadPool starvation and poor scalability**.
+
+With asynchronous I/O:
+
+```text
+Request 1 → I/O waiting
+Request 2 → I/O waiting
+Request 3 → I/O waiting
+Request 4 → I/O waiting
+```
+
+The server can use its threads more efficiently.
+
+---
+
+# 17. Why async/await for Database calls?
+
+Database access is also I/O-bound.
+
+Example with Entity Framework Core:
+
+```csharp
+public async Task<Customer?> GetCustomerAsync(
+    int id,
+    CancellationToken token)
+{
+    return await _context.Customers
+        .FirstOrDefaultAsync(x => x.Id == id, token);
+}
+```
+
+Flow:
+
+```text
+.NET API
+   ↓
+SQL Query
+   ↓
+SQL Server
+   ↓
+Database processes query
+   ↓
+Result returned
+   ↓
+.NET continues
+```
+
+During database processing, there is no reason to block a ThreadPool thread just waiting.
+
+Therefore:
+
+> Async database operations improve scalability by avoiding unnecessary thread blocking while the database performs I/O.
+
+---
+
+# 18. async does NOT mean new thread
+
+This is **very important**.
+
+Wrong:
+
+> "`async` creates a new thread."
+
+Correct:
+
+> "`async/await` allows asynchronous operations to proceed without blocking the current thread while waiting for the operation to complete."
+
+For I/O:
+
+```text
+async/await
+      ↓
+No dedicated waiting thread required
+```
+
+For CPU work:
+
+```csharp
+Task.Run(() => HeavyCalculation());
+```
+
+may use a ThreadPool thread.
+
+---
+
+# 19. Sequential async vs Concurrent async
+
+Suppose you need:
+
+```text
+Customer
+Orders
+Payments
+```
+
+### Sequential
+
+```csharp
+var customer = await GetCustomerAsync();
+var orders = await GetOrdersAsync();
+var payments = await GetPaymentsAsync();
+```
+
+Flow:
+
+```text
+Customer
+   ↓
+Orders
+   ↓
+Payments
+```
+
+If each takes 1 second, roughly:
+
+```text
+3 seconds
+```
+
+assuming they can be performed independently and similar latency.
+
+---
+
+### Concurrent
+
+```csharp
+var customerTask = GetCustomerAsync();
+var ordersTask = GetOrdersAsync();
+var paymentsTask = GetPaymentsAsync();
+
+await Task.WhenAll(
+    customerTask,
+    ordersTask,
+    paymentsTask);
+```
+
+Flow:
+
+```text
+Customer ──────────┐
+Orders ────────────┤
+Payments ──────────┤
+                   ↓
+              WhenAll
+```
+
+If they each take approximately 1 second, total waiting can be closer to:
+
+```text
+1 second
+```
+
+rather than 3 seconds.
+
+### Important
+
+Don't use concurrency blindly.
+
+You need to consider:
+
+* Database connection limits
+* External API rate limits
+* CPU usage
+* Resource contention
+* Dependency relationships
+
+---
+
+# 20. Task.Run vs async I/O
+
+This is another common interview question.
+
+### Don't unnecessarily do this:
+
+```csharp
+await Task.Run(() =>
+    httpClient.GetAsync(url));
+```
+
+The HTTP client already supports asynchronous I/O.
+
+Prefer:
+
+```csharp
+await httpClient.GetAsync(url);
+```
+
+### Task.Run is more appropriate for CPU-bound work
+
+```csharp
+var result = await Task.Run(() =>
+{
+    PerformHeavyCalculation();
+});
+```
+
+Here the calculation needs CPU time, so moving it to a ThreadPool thread may be useful depending on the scenario.
+
+---
+
+# ⭐ Complete mental model
+
+Remember this diagram:
+
+```text
+                 C# CONCURRENCY
+                       |
+        ┌──────────────┴──────────────┐
+        |                             |
+      ASYNC                       PARALLEL
+        |                             |
+    I/O-bound                    CPU-bound
+        |                             |
+   API / DB / File              Calculations
+        |                             |
+   async / await               Parallel / Tasks
+        |
+   Avoid blocking
+        |
+   Better scalability
+```
+
+And synchronization:
+
+```text
+             SHARED RESOURCE
+                    |
+             Multiple Threads
+                    |
+          ┌─────────┴─────────┐
+          |                   |
+     Race Condition        Need Control
+                              |
+                ┌─────────────┼────────────┐
+                |             |            |
+               Lock        Semaphore     Mutex
+                |
+           One at a time
+```
+
+---
+
+# 🔥 Interview definitions to memorize
+
+### Task
+
+> A Task represents an asynchronous or concurrent operation that may complete in the future.
+
+### Thread
+
+> A Thread is an independent path of execution within a process.
+
+### ThreadPool
+
+> ThreadPool is a collection of reusable threads managed by .NET for executing work efficiently.
+
+### Parallel Programming
+
+> Parallel programming means executing multiple pieces of work concurrently, usually using multiple CPU cores.
+
+### Synchronization
+
+> Synchronization controls access to shared resources when multiple threads execute concurrently.
+
+### Lock
+
+> Lock ensures that only one thread can enter a protected critical section at a time.
+
+### Monitor
+
+> Monitor is a synchronization mechanism that provides mutual exclusion and additional thread coordination features.
+
+### Mutex
+
+> Mutex provides mutual exclusion and can synchronize access across different processes.
+
+### Semaphore
+
+> Semaphore limits the number of threads that can access a resource simultaneously.
+
+### Race Condition
+
+> A race condition occurs when multiple threads access shared data and the result depends on the timing of execution.
+
+### Deadlock
+
+> Deadlock occurs when threads wait indefinitely for resources held by each other.
+
+### CancellationToken
+
+> CancellationToken provides a mechanism for requesting cooperative cancellation of an operation.
+
+### async/await
+
+> async/await provides a programming model for asynchronous operations, allowing the application to avoid blocking while waiting for I/O.
+
+### Why async/await for API/DB?
+
+> **API and database operations are I/O-bound. async/await prevents threads from being blocked while waiting for I/O, allowing the server to use its threads more efficiently and handle more concurrent requests, which improves scalability.**
