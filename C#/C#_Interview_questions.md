@@ -2170,3 +2170,413 @@ And synchronization:
 ### Why async/await for API/DB?
 
 > **API and database operations are I/O-bound. async/await prevents threads from being blocked while waiting for I/O, allowing the server to use its threads more efficiently and handle more concurrent requests, which improves scalability.**
+
+---
+
+# Important C# Coding Tasks
+
+These are common C# coding-round problems. In an interview, explain the input assumptions, handle edge cases, and mention the time and space complexity of your solution.
+
+## 1. Reverse a string
+
+```csharp
+public static string Reverse(string value)
+{
+    if (value is null)
+    {
+        throw new ArgumentNullException(nameof(value));
+    }
+
+    char[] characters = value.ToCharArray();
+    Array.Reverse(characters);
+    return new string(characters);
+}
+```
+
+Time complexity is $O(n)$ and space complexity is $O(n)$. For user-perceived characters such as emoji, use `StringInfo` or a text-element-aware approach because a .NET `char` is a UTF-16 code unit.
+
+## 2. Check whether a string is a palindrome
+
+```csharp
+public static bool IsPalindrome(string value)
+{
+    if (value is null)
+    {
+        return false;
+    }
+
+    int left = 0;
+    int right = value.Length - 1;
+
+    while (left < right)
+    {
+        if (value[left] != value[right])
+        {
+            return false;
+        }
+
+        left++;
+        right--;
+    }
+
+    return true;
+}
+```
+
+This is a two-pointer solution with $O(n)$ time and $O(1)$ additional space. State whether comparison should ignore case, spaces, or punctuation before implementing it.
+
+## 3. Find duplicate values in an array
+
+```csharp
+public static IEnumerable<int> FindDuplicates(IEnumerable<int> numbers)
+{
+    if (numbers is null)
+    {
+        throw new ArgumentNullException(nameof(numbers));
+    }
+
+    return numbers
+        .GroupBy(number => number)
+        .Where(group => group.Count() > 1)
+        .Select(group => group.Key);
+}
+```
+
+This returns each duplicate value once. A `HashSet<int>` can be used for a single-pass solution when the input is enumerated only once.
+
+```csharp
+public static IEnumerable<int> FindDuplicatesSinglePass(IEnumerable<int> numbers)
+{
+    var seen = new HashSet<int>();
+    var duplicates = new HashSet<int>();
+
+    foreach (int number in numbers)
+    {
+        if (!seen.Add(number))
+        {
+            duplicates.Add(number);
+        }
+    }
+
+    return duplicates;
+}
+```
+
+Average time complexity is $O(n)$ and additional space complexity is $O(n)$.
+
+## 4. Find the second-largest distinct number
+
+```csharp
+public static int? FindSecondLargest(IEnumerable<int> numbers)
+{
+    if (numbers is null)
+    {
+        throw new ArgumentNullException(nameof(numbers));
+    }
+
+    int? largest = null;
+    int? secondLargest = null;
+
+    foreach (int number in numbers)
+    {
+        if (largest is null || number > largest)
+        {
+            secondLargest = largest;
+            largest = number;
+        }
+        else if (number < largest &&
+                 (secondLargest is null || number > secondLargest))
+        {
+            secondLargest = number;
+        }
+    }
+
+    return secondLargest;
+}
+```
+
+The nullable return value clearly represents an input with fewer than two distinct values. This solution runs in $O(n)$ time and $O(1)$ additional space.
+
+## 5. Count character frequency
+
+```csharp
+public static Dictionary<char, int> CharacterFrequency(string value)
+{
+    if (value is null)
+    {
+        throw new ArgumentNullException(nameof(value));
+    }
+
+    var frequencies = new Dictionary<char, int>();
+
+    foreach (char character in value)
+    {
+        frequencies[character] = frequencies.GetValueOrDefault(character) + 1;
+    }
+
+    return frequencies;
+}
+```
+
+Use `StringComparer.OrdinalIgnoreCase` when the requirement is case-insensitive text, but use a `Dictionary<char, int>` only when UTF-16 code-unit behavior is acceptable.
+
+## 6. Check whether two strings are anagrams
+
+```csharp
+public static bool AreAnagrams(string first, string second)
+{
+    if (first is null || second is null || first.Length != second.Length)
+    {
+        return false;
+    }
+
+    var frequencies = new Dictionary<char, int>();
+
+    foreach (char character in first)
+    {
+        frequencies[character] = frequencies.GetValueOrDefault(character) + 1;
+    }
+
+    foreach (char character in second)
+    {
+        if (!frequencies.TryGetValue(character, out int count))
+        {
+            return false;
+        }
+
+        if (count == 1)
+        {
+            frequencies.Remove(character);
+        }
+        else
+        {
+            frequencies[character] = count - 1;
+        }
+    }
+
+    return frequencies.Count == 0;
+}
+```
+
+This approach is $O(n)$ time and avoids sorting. Clarify whether whitespace, punctuation, and casing should be ignored.
+
+## 7. Print the Fibonacci sequence
+
+```csharp
+public static IEnumerable<long> Fibonacci(int count)
+{
+    if (count < 0)
+    {
+        throw new ArgumentOutOfRangeException(nameof(count));
+    }
+
+    long previous = 0;
+    long current = 1;
+
+    for (int index = 0; index < count; index++)
+    {
+        yield return previous;
+        (previous, current) = (current, previous + current);
+    }
+}
+```
+
+This iterative and lazy implementation uses $O(1)$ state, excluding values consumed by the caller. `long` eventually overflows, so use `BigInteger` when large values are required.
+
+## 8. Solve FizzBuzz
+
+```csharp
+public static IEnumerable<string> FizzBuzz(int maximum)
+{
+    for (int number = 1; number <= maximum; number++)
+    {
+        if (number % 15 == 0)
+        {
+            yield return "FizzBuzz";
+        }
+        else if (number % 3 == 0)
+        {
+            yield return "Fizz";
+        }
+        else if (number % 5 == 0)
+        {
+            yield return "Buzz";
+        }
+        else
+        {
+            yield return number.ToString();
+        }
+    }
+}
+```
+
+Check divisibility by 15 first, or the number will match 3 before it can produce `FizzBuzz`.
+
+## 9. Remove duplicate values while preserving order
+
+```csharp
+public static IEnumerable<T> DistinctInOrder<T>(IEnumerable<T> values)
+{
+    if (values is null)
+    {
+        throw new ArgumentNullException(nameof(values));
+    }
+
+    var seen = new HashSet<T>();
+
+    foreach (T value in values)
+    {
+        if (seen.Add(value))
+        {
+            yield return value;
+        }
+    }
+}
+```
+
+This is equivalent to the behavior of LINQ `Distinct()` for normal equality semantics. It runs in average $O(n)$ time and uses $O(n)$ additional space.
+
+## 10. Find the first non-repeating character
+
+```csharp
+public static char? FirstNonRepeatingCharacter(string value)
+{
+    if (value is null)
+    {
+        throw new ArgumentNullException(nameof(value));
+    }
+
+    var frequencies = new Dictionary<char, int>();
+
+    foreach (char character in value)
+    {
+        frequencies[character] = frequencies.GetValueOrDefault(character) + 1;
+    }
+
+    foreach (char character in value)
+    {
+        if (frequencies[character] == 1)
+        {
+            return character;
+        }
+    }
+
+    return null;
+}
+```
+
+The two-pass approach preserves the original order and runs in $O(n)$ time.
+
+## 11. Merge two sorted arrays
+
+```csharp
+public static int[] MergeSortedArrays(int[] first, int[] second)
+{
+    if (first is null || second is null)
+    {
+        throw new ArgumentNullException(first is null ? nameof(first) : nameof(second));
+    }
+
+    var result = new int[first.Length + second.Length];
+    int firstIndex = 0;
+    int secondIndex = 0;
+    int resultIndex = 0;
+
+    while (firstIndex < first.Length && secondIndex < second.Length)
+    {
+        result[resultIndex++] = first[firstIndex] <= second[secondIndex]
+            ? first[firstIndex++]
+            : second[secondIndex++];
+    }
+
+    while (firstIndex < first.Length)
+    {
+        result[resultIndex++] = first[firstIndex++];
+    }
+
+    while (secondIndex < second.Length)
+    {
+        result[resultIndex++] = second[secondIndex++];
+    }
+
+    return result;
+}
+```
+
+This uses the two-pointer technique and runs in $O(n + m)$ time.
+
+## 12. Group employees by department using LINQ
+
+```csharp
+public sealed record Employee(int Id, string Name, string Department, decimal Salary);
+
+public static IEnumerable<object> GroupEmployees(IEnumerable<Employee> employees)
+{
+    return employees
+        .GroupBy(employee => employee.Department)
+        .Select(group => new
+        {
+            Department = group.Key,
+            EmployeeCount = group.Count(),
+            AverageSalary = group.Average(employee => employee.Salary),
+            HighestSalary = group.Max(employee => employee.Salary)
+        });
+}
+```
+
+Explain deferred execution when returning `IEnumerable<T>`, and materialize with `ToList()` when the result must be evaluated once and reused.
+
+## 13. Implement a thread-safe singleton
+
+```csharp
+public sealed class AppConfiguration
+{
+    private static readonly Lazy<AppConfiguration> InstanceHolder =
+        new(() => new AppConfiguration());
+
+    private AppConfiguration()
+    {
+    }
+
+    public static AppConfiguration Instance => InstanceHolder.Value;
+}
+```
+
+`Lazy<T>` provides lazy initialization and thread-safe publication by default. In ASP.NET Core applications, prefer registering a service with the built-in dependency injection container as a singleton instead of manually implementing a singleton unless a static instance is specifically required.
+
+## 14. Implement retry with cancellation for an async operation
+
+```csharp
+public static async Task<T> ExecuteWithRetryAsync<T>(
+    Func<CancellationToken, Task<T>> operation,
+    int maximumAttempts,
+    TimeSpan delay,
+    CancellationToken cancellationToken)
+{
+    if (operation is null)
+    {
+        throw new ArgumentNullException(nameof(operation));
+    }
+
+    if (maximumAttempts <= 0)
+    {
+        throw new ArgumentOutOfRangeException(nameof(maximumAttempts));
+    }
+
+    for (int attempt = 1; attempt <= maximumAttempts; attempt++)
+    {
+        try
+        {
+            return await operation(cancellationToken);
+        }
+        catch (Exception) when (attempt < maximumAttempts)
+        {
+            await Task.Delay(delay, cancellationToken);
+        }
+    }
+
+    throw new InvalidOperationException("The operation did not complete.");
+}
+```
+
+Real production retry logic should catch only transient exceptions, use exponential backoff with jitter, and avoid retrying non-idempotent operations unless they support an idempotency key.
