@@ -78,6 +78,93 @@ Versioning is necessary to manage changes without disrupting existing clients. I
 Candidates should explain the different versioning strategies and the importance of backward compatibility. This shows their understanding of how to evolve an API without breaking existing integrations.
 
 
+# REST API Developer Cheat Sheet
+
+## Related REST Development Services and Important Features
+
+| Service or component | Important feature to remember | Common development use |
+| --- | --- | --- |
+| HTTP | Stateless request/response protocol with methods, headers, status codes, and representations | Foundation for REST APIs |
+| Resource-oriented design | Resources use nouns and stable URIs | Model users, payments, orders, and documents |
+| GET | Safe and idempotent read operation | Retrieve a resource or collection |
+| POST | Usually creates a resource or starts an action; not idempotent by default | Create payments, jobs, or commands |
+| PUT | Replaces a resource and is idempotent when designed correctly | Full update at a known URI |
+| PATCH | Applies a partial update; idempotency depends on the patch operation | Change selected fields |
+| DELETE | Removes a resource and is generally idempotent | Delete or deactivate a resource |
+| API Gateway | Routing, authentication, throttling, caching, and request transformation | Central entry point for APIs |
+| Reverse proxy | TLS termination, routing, load balancing, and header forwarding | Place Nginx, IIS, or a cloud load balancer before the API |
+| OpenAPI | Machine-readable API contract | Generate documentation, clients, and contract tests |
+| JSON | Common interoperable representation format | Exchange request and response data |
+| Content negotiation | `Accept` and `Content-Type` determine representations | Support JSON, XML, or versioned media types |
+| OAuth 2.0 | Delegated authorization using access tokens | Secure web, mobile, and service integrations |
+| OpenID Connect | Identity layer built on OAuth 2.0 | Authenticate users through an identity provider |
+| JWT | Signed claims used for stateless authentication | Validate issuer, audience, signature, and expiry |
+| API key | Simple client identification or quota mechanism | Internal tools and lower-risk integrations; not a user identity by itself |
+| CORS | Browser policy controlling allowed origins, methods, and headers | Allow approved frontend applications to call the API |
+| Rate limiting | Restricts request volume per client, token, or route | Protect availability and enforce fair usage |
+| ETag / conditional requests | `If-None-Match` and `If-Match` support caching and optimistic concurrency | Avoid unnecessary transfers and lost updates |
+| Cache-Control | Defines browser and intermediary caching behavior | Cache safe, non-sensitive GET responses |
+| Pagination | Splits large collections into manageable responses | Use cursor pagination for changing or large datasets |
+| Problem Details | Standard structured error format such as RFC 9457 | Return consistent machine-readable errors |
+| Webhooks | Server calls a client callback when an event occurs | Notify clients about asynchronous completion |
+| Message queue | Durable asynchronous processing outside the request | Handle long-running work and retries |
+| WebSocket / SignalR | Bidirectional real-time communication | Live updates where polling is insufficient |
+| Distributed tracing | Correlation IDs and trace spans across services | Diagnose latency and dependency failures |
+| Health checks | Liveness and readiness endpoints | Support load balancers and orchestration |
+| Contract testing | Verify provider and consumer expectations | Prevent breaking API changes |
+
+## REST Resource and HTTP Limits
+
+There is no single universal REST limit. Limits are usually imposed by the web server, reverse proxy, API gateway, client, operating system, or downstream service. Confirm the actual values for the selected platform.
+
+| Resource or setting | Common limit or behavior | Interview point |
+| --- | --- | --- |
+| URL length | HTTP has no universal maximum; many clients and proxies commonly support around 2 KB to 8 KB | Use POST or request body for large filters and commands |
+| Request headers | Proxy and server limits vary; 8 KB is a common practical boundary | Keep cookies and JWT claims small; large headers can produce 400 or 431 |
+| Request body | Application and gateway dependent; no universal REST limit | Configure a maximum body size and stream large uploads |
+| JSON payload | Limited by available memory, parser settings, and gateway limits | Validate size and avoid buffering untrusted large bodies |
+| Query string | Limited by URL and proxy limits | Prefer cursor tokens and compact filters |
+| HTTP request timeout | Depends on client, proxy, gateway, and server | Use asynchronous jobs for operations lasting more than a normal request timeout |
+| API Gateway timeout | Cloud provider and API type dependent; commonly tens of seconds | Return a job ID instead of holding the connection for long work |
+| HTTP status codes | `2xx` success, `3xx` redirect, `4xx` client error, `5xx` server/dependency error | Choose codes consistently and document error bodies |
+| Rate limit | Application or gateway policy; no universal default | Return `429` and communicate retry timing with `Retry-After` |
+| Pagination page size | API-defined and database-dependent | Enforce a maximum page size even if the client requests more |
+| Offset pagination | Performance degrades for large offsets and changing data | Prefer cursor or keyset pagination for feeds and large tables |
+| Cursor token | Should be opaque, bounded, signed or protected when necessary | Do not expose internal database assumptions unnecessarily |
+| File upload | Limited by request body, proxy, gateway, and storage service | Use multipart or direct object-storage uploads for large files |
+| File download | Limited by connection duration, bandwidth, and proxy buffering | Stream responses and support range requests when appropriate |
+| ETag | Value is application-generated; no fixed size limit | Use strong validators for exact versions and weak validators for semantic equivalence |
+| Cache-Control | Policy-driven; private data should not be publicly cached | Never cache sensitive responses in shared caches without care |
+| JWT access token | No universal REST limit; header and proxy limits apply | Keep claims minimal and use refresh tokens for longer sessions |
+| CORS origins | Configured allow-list; wildcard is unsafe with credentials | Allow only trusted origins and required methods/headers |
+| Concurrent requests | Limited by CPU, threads, sockets, DB connections, and downstream capacity | Apply backpressure, timeouts, and bounded concurrency |
+| Connection pool | Client and server/provider dependent | Reuse HTTP clients and database connections correctly |
+| Retry count | No safe universal number | Retry only transient and idempotent operations with backoff and jitter |
+| Webhook retries | Provider-dependent | Make handlers idempotent and return quickly after durable acceptance |
+| API version lifetime | Product and compatibility decision | Deprecate with documentation, telemetry, and a migration period |
+
+## REST API Design Service Mapping
+
+| Requirement | Prefer | Important design feature |
+| --- | --- | --- |
+| Create a resource | `POST /resources` | Return `201 Created` and a `Location` header when appropriate |
+| Replace a known resource | `PUT /resources/{id}` | Make the operation idempotent and validate the complete representation |
+| Partially update a resource | `PATCH /resources/{id}` | Define patch semantics and protect against lost updates |
+| Read a collection | `GET /resources` | Add filtering, sorting, field selection, and bounded pagination |
+| Start long-running work | `POST /jobs` | Return `202 Accepted` with a status resource or callback option |
+| Check job status | `GET /jobs/{id}` | Expose status, progress, result link, and failure details |
+| Prevent duplicate commands | Idempotency key | Store the key and result with an expiry and uniqueness constraint |
+| Protect updates from overwrites | ETag plus `If-Match` | Return `412 Precondition Failed` when the version is stale |
+| Return validation errors | Problem Details with `400` or `422` | Include field-level errors without exposing internals |
+| Require authentication | OAuth 2.0/OIDC or JWT bearer | Return `401` when credentials are missing or invalid |
+| Reject authenticated access | Authorization policy | Return `403` when the caller lacks permission |
+| Handle missing resources | `404 Not Found` | Avoid leaking sensitive existence information when necessary |
+| Protect from overload | Rate limiting and quotas | Return `429` with a useful retry indication |
+| Process events reliably | Queue plus worker or webhook | Use retries, deduplication, and dead-letter handling |
+| Support multiple clients | OpenAPI, versioning, and stable contracts | Avoid breaking changes and document compatibility |
+| Secure browser clients | CORS, HTTPS, CSRF strategy, and secure cookies/tokens | CORS is not authentication |
+| Monitor production APIs | Logs, metrics, traces, and correlation IDs | Track latency, status codes, saturation, and business failures |
+
 # 1. How would you handle caching in a REST API to improve performance?
 A strong candidate should discuss various caching strategies for REST APIs:
 

@@ -571,3 +571,93 @@ Give extra attention to these areas:
 - Query optimization and performance measurement
 
 For coding rounds, explain your assumptions about duplicates, `NULL` values, ties, missing rows, and database-specific syntax before writing the query.
+
+
+# SQL Developer Services Cheat Sheet
+
+## Related SQL Development Services and Important Features
+
+| Service or component | Important feature to remember | Common development use |
+| --- | --- | --- |
+| Relational database | Tables, keys, constraints, joins, and transactions | Store structured business data |
+| SQL Server | T-SQL, execution plans, SQL Agent, Always On, and Query Store | Enterprise Microsoft workloads |
+| PostgreSQL | Advanced SQL, MVCC, extensions, JSONB, and strong standards support | Feature-rich open-source relational workloads |
+| MySQL | InnoDB transactions, indexes, replication, and broad hosting support | Web applications and transactional services |
+| Oracle Database | PL/SQL, partitioning, RAC, and enterprise tooling | Large enterprise and legacy workloads |
+| SQLite | Embedded, serverless, file-based relational database | Local applications, tests, and small deployments |
+| Azure SQL Database | Managed SQL Server with backups, scaling, and high availability | Cloud-hosted relational applications |
+| Amazon RDS / Aurora | Managed relational engines, backups, replicas, and Multi-AZ options | Cloud database hosting |
+| Database migration tool | Versioned schema changes and repeatable deployments | Apply controlled changes across environments |
+| ORM | Maps objects to relational data and translates queries | Application data access through EF Core or Hibernate |
+| Query builder | Programmatically composes parameterized SQL | Dynamic filters without string concatenation |
+| Connection pool | Reuses database connections | Reduce connection creation overhead |
+| Read replica | Separates read traffic from the primary | Scale read-heavy workloads |
+| Partitioning | Splits large logical tables into physical partitions | Improve maintenance and selective query performance |
+| Index | Data structure that accelerates lookup and sorting | Optimize selective predicates and joins |
+| Covering index | Contains all columns needed by a query | Reduce base-table lookups for hot queries |
+| Materialized view | Stores a computed query result for reuse | Accelerate expensive reporting queries |
+| Stored procedure | Executes database-side logic with parameters | Encapsulate data operations when appropriate |
+| Trigger | Automatically runs after or before data changes | Auditing or enforcing narrow database rules; use carefully |
+| View | Reusable saved query abstraction | Simplify access and expose stable read models |
+| Transaction log / WAL | Records changes for recovery and replication | Support durability and point-in-time recovery |
+| Query plan / execution plan | Shows how the engine reads, joins, sorts, and aggregates | Diagnose slow queries |
+| Query Store / performance history | Persists query performance and plan changes | Detect regressions after deployments |
+| Database monitoring | Tracks CPU, memory, I/O, locks, waits, and connections | Operate production databases safely |
+| Cache | Stores frequently used results outside the database | Reduce database load and improve latency |
+| Data warehouse | Columnar or analytical storage for large scans and aggregates | BI, reporting, and historical analysis |
+| ETL / ELT pipeline | Extracts, transforms, and loads data | Integrate operational and analytical systems |
+
+## Important SQL Resource Limits and Defaults
+
+Exact limits vary by database engine, edition, version, operating system, and configuration. Treat these as interview guidance and verify production values in the selected engine documentation.
+
+| Resource or setting | Common limit or behavior | Interview point |
+| --- | --- | --- |
+| Database connections | Limited by engine, license, memory, and connection-pool settings | Reuse pooled connections and avoid opening one per operation unnecessarily |
+| Connection pool size | Provider-dependent; common client defaults are often around 100 | Tune based on database capacity, not application thread count |
+| Query timeout | Provider and command configuration dependent; many clients commonly default to about 30 seconds | Investigate plan, locks, and I/O before only increasing the timeout |
+| Transaction duration | No universal limit, but long transactions hold locks and version data | Keep transactions short and avoid user interaction inside them |
+| Transaction log / WAL | Limited by disk and retention/replication requirements | Monitor growth and prevent a full log from blocking writes |
+| Row size | Engine-specific; large variable columns may be stored out of row or on overflow pages | Keep frequently accessed rows narrow and move large documents to object storage when appropriate |
+| Page or block size | Engine-specific, commonly several KB | Index and row layout affect I/O and storage efficiency |
+| Index count | No universal safe number | Every index can speed reads but adds storage and write/update cost |
+| Composite index columns | Engine-specific maximum | Put selective and commonly filtered columns in a deliberate order |
+| Clustered index | Usually one per table where the engine supports a clustered layout | Choose a stable, narrow, and appropriate key |
+| Query result size | Limited by client memory, network, server settings, and available resources | Select required columns and paginate large results |
+| `IN` list size | Engine and parameter limits vary | Use temporary tables, table-valued parameters, or staging tables for large lists |
+| SQL parameter count | Engine-specific; SQL Server commonly allows 2,100 parameters per prepared statement | Batch large requests or pass structured data another way |
+| SQL Server batch size | SQL Server commonly limits a batch to 65,536 multiplied by network packet size | Split very large scripts and use migrations carefully |
+| PostgreSQL parameter count | Protocol limit is 65,535 parameters | Use arrays, `COPY`, temporary tables, or batches for bulk work |
+| MySQL packet size | Controlled by `max_allowed_packet` and client settings | Increase deliberately and stream or batch large payloads |
+| PostgreSQL field value | Large values use TOAST; practical size is limited by the system and available resources | Store large binaries outside the database when suitable |
+| Deadlocks | No fixed safe number; can occur when transactions lock resources in different orders | Keep lock order consistent and retry only safe, idempotent work |
+| Isolation level | Engine-dependent defaults such as Read Committed are common | Choose consistency versus concurrency deliberately |
+| Lock escalation | Engine-specific behavior | Keep batches bounded and index predicates to reduce lock duration |
+| Replication lag | Depends on workload, network, and replica capacity | Do not read immediately from a replica when read-after-write consistency is required |
+| Backup retention | Policy and service dependent | Align retention with recovery point and compliance requirements |
+| Partition count | Engine-dependent | Partition by a useful pruning key; too many partitions increase planning and maintenance cost |
+| Temporary tables | Limited by temp storage, memory, and transaction scope | Clean up large intermediates and monitor temp-space usage |
+| Bulk insert batch size | No universal optimum | Use bounded batches to balance logging, locks, throughput, and recovery time |
+| `NULL` semantics | `NULL` means unknown, not zero or empty string | Use `IS NULL`, `IS NOT NULL`, and three-valued logic correctly |
+| Identifier length | Engine-specific | Keep names readable and compatible with migration/tooling limits |
+| String comparison | Collation and character-set dependent | Define case, accent, and locale behavior explicitly when it matters |
+
+## SQL Service and Feature Selection Rules
+
+| Requirement | Prefer | Important design feature |
+| --- | --- | --- |
+| Structured transactional data | Relational database | Primary and foreign keys, constraints, and ACID transactions |
+| Complex joins and reporting | SQL query with suitable indexes or warehouse | Inspect the execution plan and avoid unnecessary columns |
+| High-volume key lookups | Relational index or a purpose-built key-value store | Define access patterns and avoid unbounded scans |
+| Read-heavy workload | Read replicas, cache, or materialized views | Handle replica lag and cache invalidation explicitly |
+| Large time-based data | Partitioning by date or another pruning key | Use retention and archival policies |
+| Safe schema changes | Versioned migrations | Make changes backward-compatible during rolling deployments |
+| Multiple writes that must succeed together | Explicit transaction | Keep scope short and define isolation requirements |
+| Handling transient deadlocks | Bounded retry with backoff | Retry only operations designed to be safe to repeat |
+| Dynamic filtering | Parameterized query or query builder | Never concatenate untrusted input into SQL |
+| Large result sets | Keyset/cursor pagination | Avoid deep offset pagination when the table is large |
+| Large document or binary data | Object storage plus database metadata | Keep the relational row focused on queryable attributes |
+| Historical analytics | Data warehouse or analytical replica | Separate reporting load from the transactional primary |
+| Cross-service data changes | Outbox and message broker | Publish reliably after the database transaction commits |
+| Database access from application code | ORM for normal CRUD, raw SQL for measured hotspots | Keep queries observable and verify generated SQL |
+| Query performance investigation | Execution plan, wait statistics, Query Store, and monitoring | Measure before changing indexes or server size |

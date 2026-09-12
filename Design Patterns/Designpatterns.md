@@ -1064,3 +1064,111 @@ public class PaymentValidator
 Interview phrase:
 
 "I avoid duplication of business rules by extracting reusable logic into appropriate services or components."
+
+
+# Design Patterns Developer Cheat Sheet
+
+## Related Design Patterns and Important Features
+
+| Pattern or principle | Important feature to remember | Common development service use |
+| --- | --- | --- |
+| SOLID | Design guidance for maintainability, loose coupling, and focused responsibilities | Shape service, domain, and repository boundaries |
+| Single Responsibility | A class should have one reason to change | Separate validation, payment processing, persistence, and notification |
+| Open/Closed | Extend behavior without modifying stable code | Add payment or notification strategies through new implementations |
+| Liskov Substitution | Implementations must honor the abstraction contract | Replace providers without breaking callers |
+| Interface Segregation | Prefer small client-specific interfaces | Keep consumers dependent only on required operations |
+| Dependency Inversion | High-level policy depends on abstractions | Inject repositories, gateways, and external service clients |
+| Strategy | Encapsulate interchangeable algorithms behind an interface | Select payment, pricing, routing, or retry behavior at runtime |
+| Factory Method | Delegate object creation to a method or factory | Create provider-specific clients or domain objects |
+| Abstract Factory | Create related objects as a compatible family | Build complete provider-specific integrations |
+| Builder | Construct complex objects step by step | Create requests, reports, configuration, or immutable objects |
+| Singleton | One shared instance for a process or scope | Use sparingly for stateless infrastructure; prefer DI singleton registration |
+| Adapter | Convert one interface into another expected by clients | Wrap legacy APIs, SDKs, or third-party providers |
+| Facade | Provide a simpler interface over multiple components | Expose one application service over several domain or infrastructure services |
+| Decorator | Add behavior without changing the wrapped implementation | Add logging, caching, authorization, metrics, or retry behavior |
+| Proxy | Control access to another object or service | Lazy loading, access checks, remote calls, and caching |
+| Composite | Treat individual and groups uniformly | Build trees, menus, permission groups, or workflow steps |
+| Repository | Abstract persistence operations | Encapsulate database queries and aggregate persistence decisions |
+| Unit of Work | Coordinate changes and commit them together | Save related entity changes in one transaction |
+| Specification | Encapsulate reusable business predicates or queries | Compose filtering rules for search and domain validation |
+| Chain of Responsibility | Pass a request through ordered handlers | Middleware, validation pipelines, authorization, and approvals |
+| Command | Represent an action as an object | Queue work, audit commands, retry operations, or undo actions |
+| Mediator | Centralize communication between components | Reduce controller-to-service coupling and implement request pipelines |
+| Observer / Pub-Sub | Notify many subscribers when state or events change | Domain events, notifications, messaging, and cache invalidation |
+| Template Method | Define an algorithm skeleton with customizable steps | Standardize workflows while allowing provider-specific steps |
+| State | Change behavior based on current state | Payment lifecycle, order status, or workflow transitions |
+| State Machine | Make valid transitions explicit | Prevent invalid payment or approval status changes |
+| Retry with Backoff | Retry transient failures with delay and jitter | External APIs, queues, and temporary infrastructure failures |
+| Circuit Breaker | Fail fast when a dependency is unhealthy | Protect services from cascading failures |
+| Bulkhead | Isolate resource pools or failure domains | Prevent one dependency from consuming all threads or connections |
+| Outbox | Store an event with the transaction before publishing it | Prevent lost integration events after database commits |
+| Saga | Coordinate a distributed transaction with compensating actions | Multi-service payment or order workflows |
+| Strangler Fig | Replace a legacy system incrementally | Move endpoints or capabilities to a new service safely |
+
+## Development Service Mapping
+
+| Development requirement | Useful pattern or principle | Important feature |
+| --- | --- | --- |
+| HTTP request pipeline | Chain of Responsibility, Decorator | Order matters; short-circuit unauthorized or invalid requests |
+| Dependency injection | Dependency Inversion, Factory | Prefer constructor injection and explicit lifetimes |
+| Database access | Repository, Unit of Work, Specification | Keep query and transaction decisions close to persistence boundaries |
+| External API integration | Adapter, Facade, Decorator, Circuit Breaker | Hide vendor-specific contracts and protect the application from outages |
+| Multiple payment providers | Strategy, Factory, Adapter | Add providers without changing the payment workflow |
+| Background processing | Command, Queue, Consumer | Make work idempotent because delivery may be repeated |
+| Notifications | Observer, Pub-Sub, Outbox | Decouple email, SMS, and push delivery from the main transaction |
+| Multi-step workflow | State Machine, Saga, Orchestrator | Define retries, compensation, and valid transitions explicitly |
+| Caching | Proxy, Decorator, Cache-Aside | Define expiration and invalidation rules before caching |
+| Logging and metrics | Decorator, Middleware, Observer | Add telemetry without placing logging in every business method |
+| Authorization | Chain of Responsibility, Policy, Specification | Keep authorization rules centralized and testable |
+| Testing | Dependency Inversion, Factory, Builder, Test Double | Replace external services with deterministic fakes or mocks |
+| Legacy migration | Adapter, Facade, Strangler Fig | Introduce a stable boundary before replacing internals |
+
+## Important Design and Resource Limits
+
+Patterns do not remove runtime limits. These are practical constraints to consider when applying them; exact quotas depend on the runtime, database, hosting platform, and provider.
+
+| Resource or concern | Important limit or risk | Interview point |
+| --- | --- | --- |
+| Singleton state | One instance may be shared by all requests in a process | Avoid mutable state and ensure thread safety |
+| Scoped service | Usually one instance per request scope | Do not capture a scoped dependency in a singleton |
+| Transient service | A new instance can be created for every resolution | Avoid expensive construction and excessive allocations |
+| Decorator depth | No fixed limit, but many nested decorators increase latency and debugging cost | Keep the chain intentional and observable |
+| Middleware/pipeline length | No universal limit | Order security, exception handling, routing, and telemetry deliberately |
+| Strategy count | No fixed limit | Use a registry or keyed factory when implementations become numerous |
+| Factory complexity | A large conditional factory becomes a maintenance bottleneck | Split creation by bounded context or use registration-based lookup |
+| Repository queries | No fixed count, but unbounded queries cause memory and database pressure | Paginate, project, and avoid loading entire tables |
+| Unit of Work size | Large transactions hold locks and tracked entities longer | Keep transactions short and commit bounded batches |
+| Observer subscribers | More subscribers increase fanout work and failure handling | Use durable messaging when delivery cannot be lost |
+| In-process events | Lost when the process crashes or restarts | Use an outbox or durable broker for important events |
+| Queue consumers | Concurrency is limited by CPU, connections, downstream capacity, and quotas | Scale gradually and apply backpressure |
+| Retry attempts | Unlimited retries can create retry storms | Use maximum attempts, exponential backoff, jitter, and a DLQ |
+| Circuit breaker state | Incorrect thresholds can hide recovery or cause unnecessary failures | Tune failure ratio, open duration, and half-open probes |
+| Cache size | Limited by process memory or cache configuration | Set expiration, eviction, and maximum size policies |
+| Object graph depth | Deep graphs increase serialization and mapping cost | Prefer DTOs and prevent circular serialization |
+| Event payload size | Broker and transport-specific limits apply | Keep events small and store large data externally |
+| Thread pool usage | Blocking work can exhaust available worker threads | Use async I/O and bound CPU-intensive work |
+| Connection pools | Database and HTTP pools have provider-specific limits | Reuse clients, dispose correctly, and avoid unbounded parallelism |
+| Distributed locks | Leaked or long-held locks block other work | Use expiry, ownership, and a recovery strategy |
+| Saga compensation | Compensation is not the same as a database rollback | Make each step and compensating action idempotent |
+| Shared mutable state | Race conditions increase with concurrent requests | Prefer immutability, synchronization, or actor/message ownership |
+
+## Quick Pattern Selection Rules
+
+| Problem | Prefer |
+| --- | --- |
+| Choose one algorithm at runtime | Strategy |
+| Hide complex object creation | Factory or Builder |
+| Wrap an incompatible external API | Adapter |
+| Simplify several services behind one entry point | Facade |
+| Add logging, caching, or metrics around a service | Decorator |
+| Process a request through ordered checks | Chain of Responsibility |
+| Publish one event to many consumers | Pub-Sub or Observer |
+| Track valid lifecycle transitions | State Machine |
+| Coordinate multiple service operations | Saga or Orchestrator |
+| Guarantee an event is not lost after a database commit | Transactional Outbox |
+| Protect a failing dependency | Circuit Breaker plus Timeout |
+| Prevent one dependency from exhausting resources | Bulkhead plus bounded concurrency |
+| Isolate persistence from business logic | Repository or ports-and-adapters boundary |
+| Replace dependencies in tests | Dependency Inversion plus Test Doubles |
+| Replace a legacy capability gradually | Strangler Fig |
+| Avoid premature abstractions | KISS and YAGNI |

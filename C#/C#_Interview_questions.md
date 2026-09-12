@@ -2580,3 +2580,99 @@ public static async Task<T> ExecuteWithRetryAsync<T>(
 ```
 
 Real production retry logic should catch only transient exceptions, use exponential backoff with jitter, and avoid retrying non-idempotent operations unless they support an idempotency key.
+
+
+# C# Developer Services Cheat Sheet
+
+## Related C# and .NET Development Services
+
+| Service or component | Important feature to remember | Common development use |
+| --- | --- | --- |
+| C# compiler | Converts C# source into Intermediate Language (IL) and reports compile-time errors | Build type-safe applications |
+| .NET runtime | Executes IL and provides garbage collection, exceptions, threading, and type loading | Run C# applications |
+| CLR/CoreCLR | Runtime services such as JIT compilation, GC, and managed execution | Execute managed code across platforms |
+| Base Class Library | Collections, strings, files, networking, dates, reflection, and threading APIs | Use standard, tested framework functionality |
+| NuGet | Package management with package versions and dependency graphs | Add third-party or shared libraries |
+| Dependency Injection | Lifetime-managed dependency registration and constructor injection | Reduce coupling and improve testability |
+| `Task` and `async`/`await` | Composable asynchronous operations and non-blocking I/O | Scale I/O-heavy applications |
+| ThreadPool | Reuses worker and I/O threads | Execute tasks without manually creating threads |
+| `CancellationToken` | Cooperative cancellation signal | Stop requests, workers, and long-running operations safely |
+| LINQ | Query and transform objects, collections, and provider-backed data | Filter, project, group, and aggregate data |
+| `IEnumerable<T>` | Synchronous iteration and deferred execution | Process in-memory sequences |
+| `IAsyncEnumerable<T>` | Asynchronous streaming with `await foreach` | Stream database, network, or file results |
+| `System.Text.Json` | Fast built-in JSON serialization and deserialization | Convert API models to and from JSON |
+| `HttpClient` | Connection reuse and HTTP request handling | Call external services |
+| `IHttpClientFactory` | Centralized clients and handler lifetime management | Avoid socket exhaustion and configure resilience |
+| Configuration providers | JSON, environment variables, command line, and custom sources | Load environment-specific settings |
+| `ILogger<T>` | Structured logging with levels and scopes | Produce searchable diagnostics |
+| Reflection | Inspect types, members, attributes, and assemblies at runtime | Frameworks, serializers, plugins, and metadata-driven behavior |
+| Attributes | Attach declarative metadata to code elements | Validation, serialization, mapping, and test metadata |
+| Garbage Collector | Automatically reclaims unreachable managed objects | Manage memory without manual free operations |
+| `IDisposable` / `IAsyncDisposable` | Deterministic cleanup for managed wrappers and asynchronous resources | Release files, streams, connections, and handles |
+| `Span<T>` / `Memory<T>` | Work with memory slices while reducing allocations and copying | High-performance parsing and buffer processing |
+| `Channel<T>` | Async producer-consumer queue with backpressure options | Coordinate background workers |
+| `ConcurrentDictionary<TKey,TValue>` | Thread-safe dictionary operations | Share mutable lookup state across threads |
+| xUnit / NUnit | Automated unit and integration test frameworks | Verify behavior continuously |
+| BenchmarkDotNet | Reliable performance benchmarking | Measure allocations and execution speed |
+| Docker | Isolated, repeatable runtime packaging | Deploy consistent C# services |
+
+## Important C# and Runtime Limits
+
+These are common runtime or library characteristics, not universal application quotas. Actual limits depend on process architecture, operating system, .NET version, hosting platform, and available memory.
+
+| Resource or setting | Common limit or behavior | Interview point |
+| --- | --- | --- |
+| `int` | 32-bit signed integer: -2,147,483,648 to 2,147,483,647 | Use `long` for larger counters or identifiers |
+| `long` | 64-bit signed integer | Suitable for large counts, ticks, and database keys |
+| `decimal` | 128-bit decimal type with high precision | Prefer for financial calculations; never use `double` for currency totals |
+| `double` | 64-bit floating-point value | Good for scientific or approximate calculations, not exact money |
+| Array length | Limited by available memory and runtime/object limits | Prefer streaming or paging for very large data sets |
+| `string` length | Limited by available memory and runtime object limits | Avoid building huge strings; use streams or `StringBuilder` |
+| Object size | Limited by process address space and available memory | Large objects can cause allocation failures or GC pressure |
+| Large Object Heap | Objects around 85,000 bytes or larger are generally allocated on the LOH | Reuse buffers and avoid repeated large allocations |
+| GC generations | Gen 0, Gen 1, Gen 2, plus the LOH | Short-lived objects are cheaper; long-lived objects increase memory pressure |
+| `StringBuilder` capacity | Configurable; expansion is limited by available memory | Pre-size when the approximate output size is known |
+| `List<T>` capacity | Dynamically grows as items are added | Set capacity when the item count is predictable to reduce reallocations |
+| Dictionary capacity | Dynamically resizes as entries grow | Choose a suitable initial capacity for large collections |
+| ThreadPool | Dynamic and process-dependent; do not assume one fixed thread count | Avoid blocking calls and thread starvation |
+| `Task` | Represents an operation, not necessarily a dedicated thread | Async I/O does not require one blocked thread per request |
+| `Task.WhenAll` | No fixed task count, but all results and exceptions remain relevant until completion | Bound concurrency for large batches |
+| `SemaphoreSlim` | No universal concurrency default | Use it to limit calls to databases or external services |
+| `CancellationToken` | Cooperative only; it does not forcibly terminate arbitrary code | Pass tokens through every async layer and honor them |
+| `HttpClient.Timeout` | 100 seconds by default | Set an intentional timeout and combine it with cancellation |
+| `System.Text.Json` max depth | Default maximum depth is 64 | Prevent deeply nested or malicious JSON payloads |
+| JSON serialization | No single universal payload limit; server and proxy limits apply | Stream large payloads instead of buffering them all in memory |
+| Regex timeout | No timeout unless configured | Always set a timeout for regex processing on untrusted input |
+| FileStream | Limited by OS file handles, permissions, disk space, and file-system rules | Dispose streams and use async file I/O where appropriate |
+| Socket connections | Limited by OS resources, ephemeral ports, and service quotas | Reuse `HttpClient` and avoid creating one per request |
+| Database connections | Provider and connection-string dependent | Dispose connections and use pooling rather than unbounded concurrency |
+| `ConcurrentQueue<T>` | Limited by available memory | Apply backpressure instead of allowing an unbounded queue |
+| `Channel<T>` capacity | Unbounded unless a bounded channel is configured | Prefer bounded channels when producers can outrun consumers |
+| Docker memory/CPU | Controlled by container runtime settings | Configure limits and monitor OOM kills and CPU throttling |
+
+## Quick C# Selection Rules
+
+| Requirement | Prefer |
+| --- | --- |
+| Simple value with value-based equality | `record` or `record struct` |
+| Mutable business entity | `class` |
+| Small immutable value | `readonly struct` when allocation and copying are understood |
+| Fixed set of named values | `enum` |
+| Contract for multiple implementations | `interface` |
+| Shared implementation with an is-a relationship | Base class, used carefully |
+| Read-only sequence | `IReadOnlyCollection<T>` or `IReadOnlyList<T>` |
+| In-memory query | `IEnumerable<T>` and LINQ-to-Objects |
+| Provider-translated query | `IQueryable<T>` until the intended materialization point |
+| Async stream | `IAsyncEnumerable<T>` |
+| Key-based lookup | `Dictionary<TKey,TValue>` |
+| Unique values | `HashSet<T>` |
+| FIFO producer-consumer workflow | `Channel<T>` or a durable external queue |
+| Shared thread-safe lookup | `ConcurrentDictionary<TKey,TValue>` |
+| I/O concurrency | `async`/`await` with cancellation |
+| CPU-bound parallel work | Carefully bounded parallelism with `Parallel` or tasks |
+| External HTTP calls | `IHttpClientFactory` with typed clients |
+| Temporary resource cleanup | `using` or `await using` |
+| High-throughput parsing | `Span<T>`, `ReadOnlySpan<T>`, or pooled buffers |
+| Financial calculations | `decimal` with explicit rounding rules |
+| Large data processing | Streaming, pagination, batching, and bounded concurrency |
+| Runtime diagnostics | Structured logs, metrics, traces, and profilers |
