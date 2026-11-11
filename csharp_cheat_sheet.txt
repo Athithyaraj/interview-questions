@@ -1,0 +1,359 @@
+═══════════════════════════════════════════════════════════════════════
+C# QUICK CHEAT SHEET - INTERVIEW READY
+═══════════════════════════════════════════════════════════════════════
+
+COLLECTIONS & DATA STRUCTURES
+──────────────────────────────────────────────────────────────────────
+
+Dictionary<K, V>
+├─ Creation: var d = new Dictionary<K, V>();
+├─ Add: d[key] = value;  or  d.Add(key, value);
+├─ Get: d[key]  or  d.TryGetValue(key, out var value)
+├─ Check: d.ContainsKey(key)
+├─ Remove: d.Remove(key)
+├─ Keys: d.Keys
+├─ Values: d.Values
+└─ Time: O(1) average lookup
+
+HashSet<T>
+├─ Creation: var s = new HashSet<T>();
+├─ Add: s.Add(item);
+├─ Check: s.Contains(item)
+├─ Remove: s.Remove(item)
+├─ Count: s.Count
+└─ Time: O(1) average
+
+List<T>
+├─ Creation: var l = new List<T>();
+├─ Add: l.Add(item);
+├─ Insert: l.Insert(index, item);
+├─ Remove: l.Remove(item);  l.RemoveAt(index);
+├─ Access: l[index]
+├─ Count: l.Count
+└─ Time: O(1) access, O(n) insert/remove
+
+Stack<T>
+├─ Creation: var st = new Stack<T>();
+├─ Push: st.Push(item);
+├─ Pop: T item = st.Pop();  // Throws if empty
+├─ Peek: T item = st.Peek();  // Doesn't remove
+├─ Count: st.Count
+└─ Behavior: LIFO (Last In, First Out)
+
+Queue<T>
+├─ Creation: var q = new Queue<T>();
+├─ Enqueue: q.Enqueue(item);
+├─ Dequeue: T item = q.Dequeue();
+├─ Peek: T item = q.Peek();
+└─ Behavior: FIFO (First In, First Out)
+
+═══════════════════════════════════════════════════════════════════════
+STRING OPERATIONS
+══════════════════════════════════════════════════════════════════════
+
+Check/Validate
+├─ string.IsNullOrEmpty(s)           // null or ""
+├─ string.IsNullOrWhiteSpace(s)      // null or "" or "   "
+├─ s.Contains("substring")           // true/false
+├─ s.StartsWith("prefix")            // true/false
+├─ s.EndsWith("suffix")              // true/false
+├─ s.Equals(other, StringComparison.OrdinalIgnoreCase)
+
+Modify/Transform
+├─ s.Trim()                          // Remove leading/trailing whitespace
+├─ s.ToLower()  / s.ToLowerInvariant()
+├─ s.ToUpper()  / s.ToUpperInvariant()
+├─ s.Replace("old", "new")
+├─ s.Substring(startIndex, length)   // Extract portion
+├─ s.Split(separator)                // Returns string[]
+├─ string.Join(separator, items)     // Combine with separator
+
+Get Info
+├─ s.Length                          // Number of characters
+├─ s.IndexOf("substring")            // Position or -1
+├─ char.IsLetterOrDigit(c)
+├─ char.IsWhiteSpace(c)
+├─ char.ToLowerInvariant(c)
+
+═══════════════════════════════════════════════════════════════════════
+LINQ COMMON OPERATIONS
+═════════════════════════════════════════════════════════════════════
+
+Filtering & Selection
+├─ .Where(x => condition)            // Filter items
+├─ .Select(x => transform)           // Transform items
+├─ .First()  / .FirstOrDefault()     // Get first (or null)
+├─ .Last()   / .LastOrDefault()      // Get last (or null)
+├─ .Single() / .SingleOrDefault()    // Get single item
+├─ .Take(n)                          // Take first n items
+├─ .Skip(n)                          // Skip first n items
+├─ .Distinct()                       // Remove duplicates
+├─ .Where(x => !duplicates.Contains(x))  // Filter
+
+Checking
+├─ .Any()                            // Any items? (short-circuits)
+├─ .Any(x => condition)              // Any item matches?
+├─ .All(x => condition)              // All items match?
+├─ .Contains(item)
+
+Counting & Aggregation
+├─ .Count()                          // Count items
+├─ .Count(x => condition)            // Count matching
+├─ .Sum(x => x.Value)                // Sum values
+├─ .Average(x => x.Value)            // Average
+├─ .Max(x => x.Value)                // Maximum
+├─ .Min(x => x.Value)                // Minimum
+
+Sorting
+├─ .OrderBy(x => x.Value)            // Ascending
+├─ .OrderByDescending(x => x.Value)  // Descending
+├─ .ThenBy(x => x.Name)              // Secondary sort
+
+Grouping & Converting
+├─ .GroupBy(x => x.Category)         // Group by key
+├─ .ToList()                         // Convert to List<T>
+├─ .ToArray()                        // Convert to T[]
+├─ .ToDictionary(x => x.Key)         // Convert to Dictionary
+├─ .ToHashSet()                      // Convert to HashSet
+
+═══════════════════════════════════════════════════════════════════════
+COMMON ALGORITHMS
+════════════════════════════════════════════════════════════════════════
+
+TWO POINTER TECHNIQUE
+───────────────────────
+int left = 0;
+int right = array.Length - 1;
+while (left < right) {
+    // Compare or swap
+    left++;
+    right--;
+}
+Uses: Reverse, Palindrome, Two Sum (sorted)
+
+HASH MAP LOOKUP
+───────────────
+var seen = new Dictionary<int, int>();
+foreach (int num in nums) {
+    int complement = target - num;
+    if (seen.ContainsKey(complement))
+        return [seen[complement], i];
+    seen[num] = i;
+}
+Uses: Two Sum, Duplicate detection, Frequency
+
+STACK FOR MATCHING
+──────────────────
+var stack = new Stack<char>();
+foreach (char c in s) {
+    if (isClosing(c)) {
+        if (stack.Count == 0 || !matches(stack.Pop(), c))
+            return false;
+    } else {
+        stack.Push(c);
+    }
+}
+return stack.Count == 0;
+Uses: Valid parentheses, Nested structures
+
+SLIDING WINDOW
+──────────────
+int left = 0;
+int maxLen = 0;
+for (int right = 0; right < s.Length; right++) {
+    while (condition) {
+        left++;
+    }
+    maxLen = Math.Max(maxLen, right - left + 1);
+}
+Uses: Substring, Subarray problems
+
+═══════════════════════════════════════════════════════════════════════
+ASYNC/AWAIT PATTERNS
+════════════════════════════════════════════════════════════════════════
+
+BASIC ASYNC METHOD
+──────────────────
+public async Task<T> GetDataAsync()
+{
+    var data = await SomeAsyncOperation();
+    return data;
+}
+
+CALLING ASYNC
+─────────────
+// ✓ Correct - await in async method
+await GetDataAsync();
+
+// ✓ Correct - using Task
+var task = GetDataAsync();
+var result = await task;
+
+// ✗ Wrong - blocking, causes deadlock
+var result = GetDataAsync().Result;
+
+// ✗ Wrong - fire and forget
+GetDataAsync();  // Exception is lost!
+
+ASYNC IN LOOPS
+──────────────
+// ✓ Sequential (waits for each)
+foreach (var item in items) {
+    var result = await ProcessAsync(item);
+}
+
+// ✓ Parallel (runs all at once)
+var tasks = items.Select(i => ProcessAsync(i)).ToList();
+var results = await Task.WhenAll(tasks);
+
+═══════════════════════════════════════════════════════════════════════
+EXCEPTION HANDLING
+═══════════════════════════════════════════════════════════════════════
+
+TRY-CATCH-FINALLY
+──────────────────
+try {
+    // Code that might throw
+    var address = new System.Net.Mail.MailAddress(email);
+}
+catch (ArgumentException ex) {
+    Console.WriteLine($"Invalid: {ex.Message}");
+}
+catch (Exception ex) {
+    Console.WriteLine($"Unexpected: {ex.Message}");
+}
+finally {
+    // Always runs, cleanup code
+    resource?.Dispose();
+}
+
+TRY-PARSE (No Exception)
+────────────────────────
+if (int.TryParse(input, out int result)) {
+    // result contains parsed value
+} else {
+    // Failed to parse
+}
+
+═══════════════════════════════════════════════════════════════════════
+UNIT TESTING PATTERNS
+══════════════════════════════════════════════════════════════════════
+
+BASIC TEST
+──────────
+[Fact]
+public void MethodName_Scenario_ExpectedResult()
+{
+    // Arrange
+    var input = "test";
+    var expected = "TEST";
+    
+    // Act
+    var result = StringToUpper(input);
+    
+    // Assert
+    Assert.Equal(expected, result);
+}
+
+PARAMETERIZED TEST
+──────────────────
+[Theory]
+[InlineData("test", "TEST")]
+[InlineData("hello", "HELLO")]
+[InlineData("", "")]
+public void StringToUpper_VariousInputs_ReturnsUppercase(
+    string input, 
+    string expected)
+{
+    var result = StringToUpper(input);
+    Assert.Equal(expected, result);
+}
+
+ASSERTIONS
+──────────
+Assert.True(condition)
+Assert.False(condition)
+Assert.Equal(expected, actual)
+Assert.NotEqual(unexpected, actual)
+Assert.Null(value)
+Assert.NotNull(value)
+Assert.Empty(collection)
+Assert.Single(collection)  // Exactly 1 item
+Assert.Contains(item, collection)
+Assert.Throws<Exception>(() => code)
+
+═══════════════════════════════════════════════════════════════════════
+TIME & SPACE COMPLEXITY QUICK REF
+══════════════════════════════════════════════════════════════════════
+
+Data Structure Operations:
+├─ Array Access: O(1) time, O(1) space
+├─ Array Search: O(n) time, O(1) space
+├─ HashMap Lookup: O(1) avg, O(n) worst, O(n) space
+├─ HashSet Lookup: O(1) avg, O(n) worst, O(n) space
+└─ Sorting: O(n log n) best, O(n²) worst
+
+Algorithm Complexity Classes (from best to worst):
+├─ O(1)      - Constant
+├─ O(log n)  - Logarithmic (Binary search)
+├─ O(n)      - Linear (Single loop)
+├─ O(n log n)- Linearithmic (Merge sort)
+├─ O(n²)     - Quadratic (Nested loops)
+├─ O(n³)     - Cubic (Triple nested loops)
+└─ O(2ⁿ)     - Exponential (Recursive)
+
+═══════════════════════════════════════════════════════════════════════
+CODE QUALITY CHECKLIST
+═══════════════════════════════════════════════════════════════════════
+
+BEFORE SUBMITTING YOUR CODE, CHECK:
+
+Code Quality
+□ Variable names are clear (not x, y, temp)
+□ Method names describe what they do
+□ No magic numbers (use constants)
+□ Comments for non-obvious logic
+□ No dead code
+
+Correctness
+□ Edge cases handled (null, empty, negative, 0, 1)
+□ No off-by-one errors
+□ Boundary conditions correct
+□ Type conversions safe (use TryParse, not Parse)
+
+Performance
+□ Time complexity discussed
+□ Space complexity discussed
+□ No unnecessary loops
+□ Using correct data structures
+
+Testing
+□ Unit tests written
+□ Happy path tested
+□ Edge cases tested
+□ Error cases tested
+
+═══════════════════════════════════════════════════════════════════════
+FINAL TIPS FOR TOMORROW
+═══════════════════════════════════════════════════════════════════════
+
+DURING INTERVIEW:
+→ Read problem statement carefully
+→ Ask clarifying questions (constraints, edge cases)
+→ Explain approach before coding
+→ Think out loud
+→ Code clean and readable
+→ Test with an example
+→ Discuss complexity
+→ Be ready for follow-ups
+
+WHAT TO HAVE READY:
+→ VS Code open and tested
+→ Screen sharing working
+→ Water nearby
+→ Pen and paper
+→ Confidence in your abilities
+
+YOU'VE GOT THIS! 💪🚀
+
+═══════════════════════════════════════════════════════════════════════

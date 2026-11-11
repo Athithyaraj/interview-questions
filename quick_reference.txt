@@ -1,0 +1,271 @@
+═══════════════════════════════════════════════════════════════════════
+CORPAY INTERVIEW - QUICK REFERENCE GUIDE
+═══════════════════════════════════════════════════════════════════════
+
+INTERVIEW STRUCTURE (Estimated)
+──────────────────────────────────────────────────────────────────────
+⏱ 0-5 min:    Greetings & problem explanation
+⏱ 5-15 min:   Email validation & string transformation
+⏱ 15-45 min:  LeetCode-style coding problem(s)
+⏱ 45-60 min:  Code review, testing, questions & discussion
+
+═══════════════════════════════════════════════════════════════════════
+PROBLEM 1: EMAIL VALIDATION (EXPECTED)
+═══════════════════════════════════════════════════════════════════════
+
+KEY REQUIREMENTS:
+✓ Trim input string
+✓ Normalize case (usually lowercase)
+✓ Validate email format
+✓ Handle edge cases (null, empty, whitespace)
+✓ Return validation result + normalized email
+
+VALIDATION CHECKLIST:
+□ Exactly one @ symbol
+□ Non-empty local part (before @)
+□ Non-empty domain part (after @)
+□ Domain contains at least one dot
+□ No leading/trailing dots in either part
+□ No consecutive dots
+□ Local part < 64 chars, domain < 255 chars
+□ Extension (after last dot) at least 2 chars
+
+QUICK CODE TEMPLATE:
+───────────────────
+public (bool IsValid, string Normalized, string Error) ValidateEmail(string input)
+{
+    if (input == null) return (false, null, "null input");
+    
+    string trimmed = input.Trim();
+    if (string.IsNullOrEmpty(trimmed)) return (false, null, "empty");
+    
+    string normalized = trimmed.ToLowerInvariant();
+    
+    // Basic validation
+    if (!normalized.Contains("@")) return (false, null, "no @");
+    var parts = normalized.Split('@');
+    if (parts.Length != 2) return (false, null, "multiple @");
+    
+    // Validate format...
+    if (IsValidFormat(parts[0], parts[1]))
+        return (true, normalized, null);
+    
+    return (false, null, "invalid format");
+}
+
+═══════════════════════════════════════════════════════════════════════
+PROBLEM 2: LEETCODE-STYLE CODING (EXPECTED)
+═══════════════════════════════════════════════════════════════════════
+
+LIKELY PROBLEM TYPES:
+──────────────────────
+Easy/Medium:
+□ Two Sum (HashMap)
+□ Valid Parentheses (Stack)
+□ Reverse String (Two pointers)
+□ Contains Duplicate (HashSet)
+□ First Unique Character (HashMap)
+□ Palindrome Check (Two pointers)
+□ Majority Element (Boyer-Moore)
+
+YOUR APPROACH:
+──────────────
+1. LISTEN & CLARIFY (1-2 min)
+   ✓ Read problem out loud
+   ✓ Confirm understanding
+   ✓ Ask: "Any edge cases I should consider?"
+   ✓ Ask: "Performance expectations?"
+
+2. EXPLAIN SOLUTION (2-3 min)
+   ✓ Talk through approach
+   ✓ Mention data structures (HashMap, Stack, etc.)
+   ✓ Discuss complexity: Time O(?), Space O(?)
+   ✓ Get approval to code
+
+3. WRITE CODE (10-15 min)
+   ✓ Write clean, readable code
+   ✓ Use meaningful variable names
+   ✓ Add comments for non-obvious logic
+   ✓ Don't skip edge cases
+
+4. WALK THROUGH (3-5 min)
+   ✓ Trace example through code
+   ✓ Point out how edge cases are handled
+   ✓ Check for bugs
+
+5. DISCUSS OPTIMIZATION (2-3 min)
+   ✓ Can we improve time complexity?
+   ✓ Can we reduce space complexity?
+   ✓ Any better approach?
+
+═══════════════════════════════════════════════════════════════════════
+COMMON DATA STRUCTURES IN C#
+═══════════════════════════════════════════════════════════════════════
+
+Dictionary<K, V>      O(1) average lookup, key-value pairs
+HashSet<T>           O(1) average lookup, unique values only
+Stack<T>             LIFO - Push(), Pop(), Peek()
+Queue<T>             FIFO - Enqueue(), Dequeue()
+List<T>              Dynamic array, O(n) insert, O(1) access
+SortedDictionary     Ordered keys, O(log n) operations
+
+QUICK EXAMPLES:
+───────────────
+// HashMap for lookups
+var seen = new Dictionary<int, int>();
+if (seen.ContainsKey(key)) { }
+seen[key] = value;
+
+// HashSet for uniqueness
+var unique = new HashSet<int>();
+unique.Add(num);
+if (unique.Contains(num)) { }
+
+// Stack for LIFO
+var stack = new Stack<char>();
+stack.Push(item);
+char top = stack.Pop();
+
+// LINQ for functional operations
+var result = nums.Where(x => x > 0)
+                 .Select(x => x * 2)
+                 .OrderBy(x => x)
+                 .ToList();
+
+═══════════════════════════════════════════════════════════════════════
+UNIT TESTING IN C# (XUNIT STYLE)
+═══════════════════════════════════════════════════════════════════════
+
+ATTRIBUTE MEANINGS:
+────────────────────
+[Fact]           Single test case
+[Theory]         Multiple test cases (with parameters)
+[InlineData(...)] Pass test data inline
+[MemberData(...)] Pass test data from another source
+
+TEST STRUCTURE:
+────────────────
+[TestMethod]
+public void MethodName_Scenario_ExpectedResult()
+{
+    // Arrange - setup
+    var input = "test@example.com";
+    
+    // Act - execute
+    var result = ValidateEmail(input);
+    
+    // Assert - verify
+    Assert.IsTrue(result.IsValid);
+    Assert.AreEqual("test@example.com", result.Normalized);
+}
+
+ASSERTION HELPERS:
+───────────────────
+Assert.IsTrue(condition)
+Assert.IsFalse(condition)
+Assert.AreEqual(expected, actual)
+Assert.IsNull(value)
+Assert.IsNotNull(value)
+Assert.Throws<Exception>(() => code)
+
+═══════════════════════════════════════════════════════════════════════
+C# GOTCHAS TO AVOID
+═══════════════════════════════════════════════════════════════════════
+
+STRINGS ARE IMMUTABLE
+❌ string result = "";
+   foreach (item in items) result += item; // Creates new string each time!
+✓ Use StringBuilder instead for loops
+
+NULL CHECKING
+❌ if (email != "") { } // Throws if email is null
+✓ if (!string.IsNullOrEmpty(email)) { }
+
+DICTIONARY LOOKUPS
+❌ var value = dict[key]; // Throws if key doesn't exist
+✓ if (dict.TryGetValue(key, out var value)) { }
+✓ if (dict.ContainsKey(key)) { var value = dict[key]; }
+
+LINQ ENUMERATION
+❌ var list = someLinq.ToList(); // Executes query now
+✓ var enum = someLinq; // Lazy evaluation (if IEnumerable)
+
+STRING COMPARISON
+❌ if (str1 == str2) { } // Case sensitive
+✓ if (str1.Equals(str2, StringComparison.OrdinalIgnoreCase)) { }
+✓ string.Equals(str1, str2, StringComparison.CurrentCultureIgnoreCase)
+
+═══════════════════════════════════════════════════════════════════════
+INTERVIEW TIPS FOR SUCCESS
+═══════════════════════════════════════════════════════════════════════
+
+BEFORE YOU START:
+─────────────────
+□ Have water nearby
+□ Minimize distractions
+□ Test audio/video/screen share in advance
+□ Open VS Code (or requested IDE)
+□ Have scratch paper ready
+□ Close unnecessary browser tabs/windows
+
+DURING THE INTERVIEW:
+─────────────────────
+□ Speak clearly and at normal pace
+□ Think out loud - explain your reasoning
+□ Don't rush into coding
+□ Ask questions if requirements are unclear
+□ Mention edge cases BEFORE you code them
+□ Comment your code while writing
+□ Trace through with an example
+□ Handle errors gracefully
+□ Don't panic if you get stuck - ask for hints
+
+RED FLAGS TO AVOID:
+───────────────────
+❌ Jumping straight to code without explaining
+❌ Writing code with no comments
+❌ Not handling null/empty inputs
+❌ Ignoring edge cases
+❌ Submitting without testing
+❌ Making excuses instead of problem-solving
+❌ Being defensive about feedback
+❌ Not listening to interviewer hints
+
+GREEN FLAGS TO SHOW:
+────────────────────
+✓ Clarifying requirements
+✓ Thinking about edge cases
+✓ Explaining your approach
+✓ Writing clean, readable code
+✓ Testing your solution
+✓ Discussing trade-offs
+✓ Open to feedback
+✓ Showing debugging skills
+✓ Asking clarifying questions
+
+═══════════════════════════════════════════════════════════════════════
+LAST-MINUTE CHECKLIST (TOMORROW MORNING)
+═══════════════════════════════════════════════════════════════════════
+
+□ Review email validation requirements
+□ Review 3-4 LeetCode easy problems (2sum, valid parens, reverse string)
+□ Practice writing unit tests
+□ Review C# Dictionary, HashSet, Stack operations
+□ Test VS Code + screen sharing setup
+□ Get good sleep tonight!
+□ Eat a good breakfast
+□ Have notebook + pen ready
+□ Arrive 10 minutes early to call
+
+═══════════════════════════════════════════════════════════════════════
+YOU'VE GOT THIS! 💪
+
+Remember:
+→ The interviewer WANTS you to succeed
+→ It's okay to think before you speak
+→ Edge cases show maturity
+→ Clean code > clever code
+→ Communication is key
+
+Good luck! 🚀
+═══════════════════════════════════════════════════════════════════════

@@ -107,7 +107,7 @@ I also noticed that Corpay has a significant global presence, with operations ac
 
 What interested me most is the combination of financial technology, APIs and large-scale payment systems.
 
-10. Know this Cross-Border payment flow
+# 10. Know this Cross-Border payment flow
 You don't need to become a payments expert.
 But understand this basic flow:
 Customer
@@ -181,6 +181,9 @@ Very strong.
 Good for understanding the actual role.
 #5
 "What opportunities do engineers have to grow toward Senior Engineer or technical leadership responsibilities?"
+
+#6
+I noticed that Corpay has different business areas, such as Corpay Cross-Border and Corpay Technologies. Could you help me understand which business unit and team this role would be part of, and what kind of products or projects I would be working on?
 
 Good because your goal is Senior Engineer.
 
@@ -285,6 +288,7 @@ I value an environment where engineers can share ideas, ask questions, learn fro
 
 # 2. Questions specifically about leaving EPAM#
 These are particularly important because the interviewer may want to understand whether you're dissatisfied with your current workplace.
+
 # Q11. Are you unhappy with EPAM's culture?
 Sample answer:
 "No, I've had a positive experience at EPAM. I've learned a lot, worked with good teams and grown into a Key Engineer role.
